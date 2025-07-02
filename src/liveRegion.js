@@ -1,181 +1,201 @@
-;(function (factory) {
+/**
+ * Vanilla JavaScript Live Regions
+ * A modern, vanilla JavaScript implementation for managing ARIA live regions
+ *
+ * @module LiveRegion
+ */
 
-    var define, require;
+(function (global, factory) {
+  'use strict';
 
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(['jquery'], factory);
-    } else if (typeof exports === 'object') {
-        // Node/CommonJS
-        factory(require('jquery'));
-    } else {
-        // Browser globals
-        factory(jQuery);
+  if (typeof exports === 'object' && typeof module !== 'undefined') {
+    // CommonJS
+    module.exports = factory();
+  } else if (typeof define === 'function' && define.amd) {
+    // AMD
+    define(factory);
+  } else {
+    // Browser global
+    global.LiveRegion = factory();
+  }
+})(typeof window !== 'undefined' ? window : this, function () {
+  'use strict';
+
+  /**
+   * Default options for live regions
+   */
+  const defaults = {
+    labelledby: null,
+    label: null,
+    role: 'region',
+    atomic: 'false',
+    live: 'polite',
+    relevant: 'additions',
+    busy: 'false',
+    className: undefined,
+    replace: false,
+    text: undefined,
+    wait: 200,
+  };
+
+  /**
+   * Check if a value is empty
+   * @param {*} str - Value to check
+   * @returns {boolean} True if empty
+   */
+  function isEmpty(str) {
+    return ['', ' ', 0, '0', null, false, undefined].includes(str);
+  }
+
+  /**
+   * Remove empty properties from an object
+   * @param {Object} obj - Object to clean
+   * @returns {Object} Cleaned object
+   */
+  function cleanBlank(obj) {
+    const cleaned = {};
+    for (const key in obj) {
+      if (
+        Object.prototype.hasOwnProperty.call(obj, key) &&
+        !isEmpty(obj[key])
+      ) {
+        cleaned[key] = obj[key];
+      }
     }
-}(function ($) {
-    'use strict';
-    $.fn.extend({
-        /**
-         * This allows you to set relevant aria live-region states and properties.
-         * The primary convenience is that it sets some sensible defaults which you can override.
-         * It also allows you to dynamically override one or more of the properties as content is
-         * updated.
-         * Also, if you've set some of these properties elsewhere before calling this function, your existing
-         * property values will remain unless you explicitly overwrite them with this function.
-         *
-         * Example uses:
-         * 1. Create a live region with default options:         $('#foo').liveRegion();
-         * 2. Create a live region and give it a label:          $('#foo').liveRegion({label: 'News Ticker'});
-         * 3. Change aria-busy state as  new content is loading:  $('#foo').liveRegion({busy: 'true'});
-         *
-         * Note: for those new to aria:  all aria-* values are strings. So the token values, 'true' and 'false' must
-         * be supplied to this function as strings, not booleans.
-         *
-         * For info on the relevant live region roles and their uses, go to
-         * http://www.w3.org/WAI/PF/aria-practices/#liveprops
-         *
-         * @param opts
-         */
-        liveRegion: function (opts) {
-            var self = $(this),
-                current,
-                labelledby,
-                label,
-                role,
-                atomic,
-                live,
-                relevant,
-                busy,
-                className,
-                replace,
-                text,
-                wait;
+    return cleaned;
+  }
 
-            if (typeof opts === 'undefined') {
-                opts = {};
-            }
+  /**
+   * Get current ARIA attributes from an element
+   * @param {HTMLElement} element - Target element
+   * @returns {Object} Current attributes
+   */
+  function getCurrentAttributes(element) {
+    return {
+      labelledby: element.getAttribute('aria-labelledby') || undefined,
+      label: element.getAttribute('aria-label') || undefined,
+      role: element.getAttribute('role') || undefined,
+      atomic: element.getAttribute('aria-atomic') || undefined,
+      live: element.getAttribute('aria-live') || undefined,
+      relevant: element.getAttribute('aria-relevant') || undefined,
+      busy: element.getAttribute('aria-busy') || undefined,
+    };
+  }
 
-            /**
-             * function to determine whether something is blank or not
-             * @param str
-             * @returns {boolean}
-             */
-            function isEmpty(str) {
+  /**
+   * Create or update a live region
+   * @param {HTMLElement|string} selector - Element or CSS selector
+   * @param {Object} options - Configuration options
+   * @returns {HTMLElement|HTMLElement[]} Affected element(s)
+   */
+  function liveRegion(selector, options = {}) {
+    // Get element(s)
+    let elements;
+    if (typeof selector === 'string') {
+      elements = document.querySelectorAll(selector);
+    } else if (selector instanceof HTMLElement) {
+      elements = [selector];
+    } else if (selector instanceof NodeList || selector instanceof Array) {
+      elements = selector;
+    } else {
+      throw new Error('Invalid selector provided to liveRegion');
+    }
 
-                switch (str) {
-                    case '':
-                    case ' ':
-                    case 0:
-                    case '0':
-                    case null:
-                    case false:
-                    case undefined:
-                        return true;
-                    default:
-                        return false;
-                }
-            }
+    // Process each element
+    const results = [];
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
 
-            /**
-             *
-             * @param obj
-             * @returns {*}
-             */
-            function cleanBlank(obj) {
-                var key;
+      // Get current attributes
+      const current = cleanBlank(getCurrentAttributes(element));
 
-                for (key in obj) {
-                    if (obj.hasOwnProperty(key)) {
-                        if (false !== isEmpty(obj[key])) {
-                            delete obj[key];
-                        }
-                    }
-                }
-                return obj;
-            }
+      // Merge options with current values and defaults
+      const config = Object.assign({}, defaults, current, options);
 
-            // get the values of any existing live-region related properties
-            current = {
-                labelledby: self.attr('aria-labelledby') || undefined,
-                label: self.attr('aria-label') || undefined,
-                role: self.attr('role') || undefined,
-                atomic: self.attr('aria-atomic') || undefined,
-                live: self.attr('aria-live') || undefined,
-                relevant: self.attr('aria-relevant') || undefined,
-                busy: self.attr('aria-busy') || undefined
-            };
+      // Override live property for alert role
+      if (config.role === 'alert') {
+        config.live = 'assertive';
+      }
 
-            //clean anything that is a blank string because although that's truthy, it is useless to us
-            // if we wanted to be really heavy-handed, we could check (some of) these against their
-            // valid token values as defined in the ARIA spec.
-            current = cleanBlank(current);
+      // Set ARIA attributes
+      element.setAttribute('role', config.role);
+      element.setAttribute('aria-atomic', config.atomic);
+      element.setAttribute('aria-live', config.live);
+      element.setAttribute('aria-busy', config.busy);
+      element.setAttribute('aria-relevant', config.relevant);
 
-            // this section determines what the new values should be.
-            // it does so by setting to:
-            // 1.  the defined opts value if they exist or,
-            // 2.  the currently existing value or,
-            // 3.  the default value
-            // (in that order)
-            labelledby = opts.labelledby || current.labelledby || null;
-            label = opts.label || current.label || null;
-            role = opts.role || current.role || 'region';
-            atomic = opts.atomic || current.atomic || 'false';
-            live = opts.live || current.live || 'polite';
-            relevant = opts.relevant || current.relevant || 'additions';
-            busy = opts.busy || current.busy || 'false';
-            className = opts.className || undefined;
-            replace = opts.replace || false;
-            text = opts.text || undefined;
-            wait = opts.wait || 200;
+      // Set label attributes if provided
+      if (config.labelledby !== null && config.labelledby !== undefined) {
+        element.setAttribute('aria-labelledby', config.labelledby);
+      }
 
-            /**
-             * Semi-kludgey: if the role is alert, override any 'live' property value to ensure it is assertive
-             */
-            if (role === 'alert') {
-                live = 'assertive';
-            }
+      if (config.label !== null && config.label !== undefined) {
+        element.setAttribute('aria-label', config.label);
+      }
 
-            // actually set the values
-            self.attr('role', role)
-                .attr('aria-atomic', atomic)
-                .attr('aria-live', live)
-                .attr('aria-busy', busy)
-                .attr('aria-relevant', relevant);
+      // Add CSS class if provided
+      if (config.className !== undefined) {
+        element.classList.add(config.className);
+      }
 
-            // Note: It is assumed that the consumer is smart enough to know
-            // not to use *both* aria-labelledby and aria-label
-            // so we don't do any heavy-handed checking here
-            if ((labelledby !== undefined) && (labelledby !== null)) {
-                self.attr('aria-labelledby', labelledby);
-            }
+      // Handle text content
+      if (config.text !== undefined) {
+        setTimeout(() => {
+          if (config.replace) {
+            element.innerHTML = config.text;
+          } else {
+            element.insertAdjacentHTML('beforeend', config.text);
+          }
+        }, config.wait);
+      }
 
-            if ((label !== undefined) && (label !== null)) {
-                self.attr('aria-label', label);
-            }
+      results.push(element);
+    }
 
-            // add CSS class if needed
-            if (className !== undefined) {
-                self.addClass(className);
-            }
+    // Return single element or array based on input
+    return results.length === 1 ? results[0] : results;
+  }
 
-            // add or replace text, if needed
-            // NOTE the use of setTimeout here to deal with some screen readers not
-            // announcing liveRegion content if the content is added at the same time
-            // as the other relevant live region attributes
-            if (typeof text !== 'undefined') {
-                if (replace === false) {
-                    setTimeout(function () {
-                        self.append(text);
-                    }, wait);
-                }
-                else {
-                    setTimeout(function () {
-                        self.empty().html(text);
-                    }, wait);
-                }
-            }
+  /**
+   * Static method to create a new live region
+   * @param {Object} options - Configuration options
+   * @returns {HTMLElement} New live region element
+   */
+  liveRegion.create = function (options = {}) {
+    const element = document.createElement('div');
+    document.body.appendChild(element);
+    return liveRegion(element, options);
+  };
 
-            return this;
-        }
-    });
-}));
+  /**
+   * Static method to find all live regions on the page
+   * @returns {NodeList} All elements with aria-live attribute
+   */
+  liveRegion.findAll = function () {
+    return document.querySelectorAll('[aria-live]');
+  };
+
+  /**
+   * Static method to remove live region attributes
+   * @param {HTMLElement|string} selector - Element or CSS selector
+   */
+  liveRegion.remove = function (selector) {
+    const elements =
+      typeof selector === 'string'
+        ? document.querySelectorAll(selector)
+        : [selector];
+
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+      element.removeAttribute('role');
+      element.removeAttribute('aria-atomic');
+      element.removeAttribute('aria-live');
+      element.removeAttribute('aria-busy');
+      element.removeAttribute('aria-relevant');
+      element.removeAttribute('aria-labelledby');
+      element.removeAttribute('aria-label');
+    }
+  };
+
+  return liveRegion;
+});

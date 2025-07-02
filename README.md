@@ -1,148 +1,273 @@
-# jQuery Live Regions
+# Vanilla Live Regions
 
-[![Build Status](https://travis-ci.org/karlgroves/jquery-live-regions.svg?branch=master)](https://travis-ci.org/karlgroves/jquery-live-regions)
+A modern, vanilla JavaScript library for managing ARIA live regions on web pages. This library provides an easy-to-use API for creating and managing live regions that announce content changes to screen reader users.
 
-This is a simple, easy to use plugin for managing live regions on a page, including adding new content or swapping content in the live region.
+## Features
+
+- 🚀 Zero dependencies - pure vanilla JavaScript
+- 📦 Small footprint - lightweight and efficient
+- 🎯 Modern ES6+ syntax with backward compatibility
+- 🔧 Flexible API - works with selectors, elements, or NodeLists
+- ♿ Full ARIA support with sensible defaults
+- 🧪 Thoroughly tested with modern testing tools
 
 ## Getting Started
 
-Download the [production version][min] or the [development version][max].
+### Installation
 
-[min]: https://raw.github.com/karlgroves/jquery-live-regions/master/dist/liveRegion.min.js
-[max]: https://raw.github.com/karlgroves/jquery-live-regions/master/src/liveRegion.js
+Install via npm:
 
-Install via bower:
-
-```
-bower install jquery-live-regions --save
+```bash
+npm install vanilla-live-regions --save
 ```
 
-## Creating live region
+Or include directly in your HTML:
 
-### Primary Use Case
-
-Live Regions allows the user of assistive technologies to be notified of content changes that may occur automatically and may not be explicitly triggered by the user. The content change may exist separate to what object has focus, and so Live Regions facilitate these notifications. Possible examples include:
-
-* Chat logs
-* Error logs
-* Stock tickers
-* Timers
-* Progress indicators
-* Form validation messages
-
-There are many types of changes that occur in the typical web-based applications and essentially any content that changes dynamically is a candidate for a live region.
-
-### Secondary Use Case
-
-Some changes to content on a page should trigger notifications to the user of assistive technologies, but don't. This pluging can be used as a "notifier" of sorts, to add these relevant notifications.
-
-### Super simple method
-
-```
-$('#foo').liveRegion();
+```html
+<script type="module">
+  import LiveRegion from './dist/liveRegion.mjs';
+</script>
 ```
 
-The above method creates a live region with default values. Modifications to the content within the live region will be announced by assistive technology.
+## Usage
 
-### Give it a label
+### Basic Usage
 
-```$('#foo').liveRegion({label: 'News Ticker'});```
+```javascript
+import LiveRegion from 'vanilla-live-regions';
 
-This will create a live region with an `aria-label` of "New Ticker"
-
-### Use it as a notifier
-Consider the following use case where a user searches for clothing products. When the user refines their search options, such as size and color, the results list is dynamically updated client-side (or via AJAX).
-
+// Create a live region with default settings
+const element = document.getElementById('my-region');
+LiveRegion(element);
 ```
-// Set up the "notifier" as a container for notices
-var notifer = $('#notifier');
-notifier.liveRegion({
-  label: 'Search Status',
-  role: 'region',
-  live: 'assertive'
-});
+
+### Using CSS Selectors
+
+```javascript
+// Apply to single element
+LiveRegion('#status-message');
+
+// Apply to multiple elements
+LiveRegion('.notification');
 ```
-Now, the user triggers the search and results are refined
-```
-notifier.liveRegion({
-  replace: 'true',
-  text: 'Search results updated: ' + num + ' results. Size: ' + sSize + ', Color: ' +sColor;
-});
-```
-The above example shows the live region indicating to the user that search results were updated and lists out the search criteria.
 
+### Custom Configuration
 
-## Full list of available properties
-
-Note: You are not required to provide any of these values. They will be set to sensible defaults if they aren't supplied.
-
-* labelledby - Points to an ID of another element on screen to use as a label. Becomes `aria-labelledby` on the live region.
-* label - String of text provided to serve as a label. Becomes `aria-label` attribute on the live region.
-* role - what type of live region is this? Options are:
-  * log
-  * status
-  * alert
-  * marquee
-  * timer
-  * progressbar
-  * region
-* atomic - Valid values are 'true' and 'false'. NOTE: these must be strings, not booleans. Non-intuitive, I know.
-* live - Indicates how important the content is. Valid values are 'polite' and 'assertive'. It is best to use 'polite' unless this is an urgent notice of some kind. Becomes `aria-live` attribute on the live region
-* relevant - what are the relevant changes you want to announce? Becomes `aria-relevant` on the live region.
-  * additions
-  * removals
-  * text
-  * all
-* busy - is the live region busy or not. Valid values are 'true' and 'false'. As before, must be strings.
-* className - CSS class name to be added to the node
-* replace - boolean representing whether or not the current text is to be replaced or not. If false, the text (defined below) will be appended to the live region node. If true, all existing content is removed first.
-* text - string of text (or HTML) to be inserted into the live region.
-
-### Sample use with all available properties:
-
-```
-$('#foo').liveRegion({
-    label: 'Chat Log',
-    role: 'log',
-    atomic: 'false',
-    live: 'polite',
-    relevant: 'additions text',
-    busy: 'false',
-    className: 'tblLiveCaption'
-    replace: true,
-    text: 'User List, assorted by last name descending'
+```javascript
+LiveRegion('#news-ticker', {
+  label: 'News Updates',
+  role: 'status',
+  live: 'polite',
+  atomic: 'true'
 });
 ```
 
-## Overriding Values
+### Creating Dynamic Live Regions
 
-There may be times when you want to override one or more of the existing values.  For instance, in the case where you're waiting for new content to arrive from Ajax:
-
-```
-// the default set up
-$('#foo').liveRegion({
-    label: 'Chat Log',
-    role: 'log',
-    atomic: 'false',
-    live: 'polite',
-    relevant: 'additions text',
-    busy: 'false'
+```javascript
+// Create a new live region dynamically
+const alertRegion = LiveRegion.create({
+  role: 'alert',
+  label: 'System Alerts'
 });
 
-// when waiting for the new content
-if(we-are-waiting-for-the-new-content){
-	$('#foo').liveRegion({
-	  busy: 'true'
-	});
-}
+// Update its content
+LiveRegion(alertRegion, {
+  text: 'New notification received!',
+  replace: true
+});
 ```
 
-In the above scenario, the original settings are retained and only the `aria-busy` value is modified.
+## API Reference
 
+### LiveRegion(selector, options)
 
-## More information:
+Creates or updates a live region.
 
-A complete tutorial on live regions is out of the scope of this README.  Browse the following for more info:
+#### Parameters
 
-* [http://www.w3.org/WAI/PF/aria-practices/#liveprops](http://www.w3.org/WAI/PF/aria-practices/#liveprops)
-* [https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions)
+- `selector` - Can be:
+  - CSS selector string (e.g., '#my-element', '.my-class')
+  - HTMLElement
+  - NodeList
+  - Array of HTMLElements
+
+- `options` - Configuration object with the following properties:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `labelledby` | string | null | ID of element to use as label (aria-labelledby) |
+| `label` | string | null | Text label for the region (aria-label) |
+| `role` | string | 'region' | ARIA role (region, status, alert, log, marquee, timer, progressbar) |
+| `atomic` | string | 'false' | Whether to announce entire region or just changes |
+| `live` | string | 'polite' | Announcement priority (polite, assertive) |
+| `relevant` | string | 'additions' | What changes to announce (additions, removals, text, all) |
+| `busy` | string | 'false' | Whether region is being updated |
+| `className` | string | undefined | CSS class to add to the element |
+| `replace` | boolean | false | Whether to replace existing content |
+| `text` | string | undefined | Content to add/replace in the region |
+| `wait` | number | 200 | Delay (ms) before updating content |
+
+### Static Methods
+
+#### LiveRegion.create(options)
+
+Creates a new live region element and appends it to the document body.
+
+```javascript
+const notification = LiveRegion.create({
+  role: 'status',
+  label: 'Notifications'
+});
+```
+
+#### LiveRegion.findAll()
+
+Returns all elements on the page that have live region attributes.
+
+```javascript
+const allRegions = LiveRegion.findAll();
+console.log(`Found ${allRegions.length} live regions`);
+```
+
+#### LiveRegion.remove(selector)
+
+Removes all live region attributes from the specified element(s).
+
+```javascript
+LiveRegion.remove('#my-region');
+```
+
+## Common Use Cases
+
+### Status Messages
+
+```javascript
+LiveRegion('#status', {
+  role: 'status',
+  text: 'Form saved successfully',
+  replace: true
+});
+```
+
+### Error Alerts
+
+```javascript
+LiveRegion('#errors', {
+  role: 'alert',
+  text: 'Error: Invalid email address',
+  replace: true
+});
+```
+
+### Progress Indicators
+
+```javascript
+const progressRegion = LiveRegion('#progress', {
+  role: 'progressbar',
+  label: 'Upload Progress',
+  busy: 'true'
+});
+
+// Update progress
+LiveRegion(progressRegion, {
+  text: 'Upload 45% complete',
+  replace: true
+});
+
+// Complete
+LiveRegion(progressRegion, {
+  text: 'Upload complete',
+  busy: 'false',
+  replace: true
+});
+```
+
+### Chat or Activity Logs
+
+```javascript
+LiveRegion('#chat-log', {
+  role: 'log',
+  label: 'Chat Messages',
+  relevant: 'additions text'
+});
+
+// Add new messages
+LiveRegion('#chat-log', {
+  text: '<div>User: Hello!</div>',
+  replace: false  // Append, don't replace
+});
+```
+
+## Development
+
+### Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Check coverage
+npm run test:coverage
+```
+
+### Project Structure
+
+```
+├── src/
+│   └── liveRegion.vanilla.js    # Main library source
+├── test/
+│   └── liveRegion.test.js       # Test suite
+├── dist/                         # Built files (generated)
+├── demo.html                     # Interactive demo
+└── vite.config.js               # Build configuration
+```
+
+## Browser Support
+
+This library supports all modern browsers and provides fallbacks for older browsers that support ES5.
+
+## Migration from jQuery Version
+
+If you're migrating from the jQuery version:
+
+1. Remove jQuery dependency
+2. Update your imports:
+   ```javascript
+   // Old
+   $('#element').liveRegion(options);
+   
+   // New
+   import LiveRegion from 'vanilla-live-regions';
+   LiveRegion('#element', options);
+   ```
+
+3. The API remains largely the same, with the main difference being the function call syntax.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see LICENSE file for details
+
+## More Information
+
+For more information about ARIA live regions:
+
+- [W3C ARIA Practices - Live Regions](https://www.w3.org/WAI/ARIA/apg/patterns/live-region/)
+- [MDN - ARIA Live Regions](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions)
+- [WebAIM - ARIA Live Regions](https://webaim.org/articles/aria/#liveregions)

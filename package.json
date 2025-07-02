@@ -1,67 +1,62 @@
 {
-  "name": "jquery-live-regions",
-  "version": "0.0.1",
-  "title": "jQuery Live Regions",
-  "description": "jQuery script for managing live regions on a page",
-  "keywords": "Accessibility, WAI-ARIA, Live Regions, WCAG",
+  "name": "@afixt/vanilla-live-regions",
+  "version": "1.0.0",
+  "title": "Vanilla JS Live Regions",
+  "description": "Vanilla JavaScript library for managing ARIA live regions",
+  "keywords": [
+    "Accessibility",
+    "WAI-ARIA",
+    "Live Regions",
+    "WCAG",
+    "a11y"
+  ],
   "author": {
     "name": "Karl Groves",
-    "email": "karl@karlgroves.com",
-    "url": "http://www.karlgroves.com"
+    "email": "karl.groves@afixt.com",
+    "url": "http://www.afixt.com"
+  },
+  "type": "module",
+  "main": "./dist/liveRegion.js",
+  "module": "./dist/liveRegion.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/liveRegion.mjs",
+      "require": "./dist/liveRegion.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js test/**/*.js"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "grunt": "~0.4.5",
-    "grunt-contrib-clean": "~1.0.0",
-    "grunt-contrib-connect": "~0.11.2",
-    "grunt-contrib-copy": "~1.0.0",
-    "grunt-contrib-jshint": "~1.0.0",
-    "grunt-contrib-uglify": "~1.0.0",
-    "grunt-contrib-watch": "~0.6.1",
-    "grunt-git-describe": "~2.3.2",
-    "grunt-jsonlint": "^1.1.0",
-    "grunt-karma": "~0.12.1",
-    "grunt-mocha": "~0.4.10",
-    "grunt-travis-lint": "0.0.3",
-    "js-fixtures": "^1.5.1",
-    "jshint-stylish": "~2.1.0",
-    "karma": "~0.13.21",
-    "karma-chai": "^0.1.0",
-    "karma-chrome-launcher": "~0.2.2",
-    "karma-coffee-preprocessor": "~0.3.0",
-    "karma-coverage": "^0.5.4",
-    "karma-firefox-launcher": "~0.1.3",
-    "karma-html2js-preprocessor": "~0.1.0",
-    "karma-junit-reporter": "^0.3.8",
-    "karma-mocha": "~0.2.2",
-    "karma-opera-launcher": "~0.3.0",
-    "karma-phantomjs-launcher": "~1.0.0",
-    "karma-safari-launcher": "~0.1.1",
-    "karma-sauce-launcher": "^0.3.1",
-    "karma-script-launcher": "~0.2.0",
-    "karma-sinon": "^1.0.3",
-    "load-grunt-tasks": "~3.4.1",
-    "matchdep": "~1.0.1",
-    "mocha": "~2.4.5",
-    "sinon": "^1.9.1",
-    "time-grunt": "~1.3.0"
+    "@vitest/coverage-v8": "^1.2.0",
+    "@vitest/ui": "^1.2.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.0",
+    "jsdom": "^24.0.0",
+    "prettier": "^3.2.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.2.0"
   },
   "engines": {
-    "node": ">=0.8.0"
+    "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:karlgroves/jquery-live-regions.git"
+    "url": "git+ssh://git@github.com/AFixt/vanillajs-live-regions.git"
   },
   "bugs": {
-    "url": "https://github.com/karlgroves/jquery-live-regions/issues"
+    "url": "https://github.com/AFixt/vanillajs-live-regions/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT"
-    }
-  ],
-  "scripts": {
-    "test": "grunt karma:dev:start"
-  }
+  "license": "MIT"
 }

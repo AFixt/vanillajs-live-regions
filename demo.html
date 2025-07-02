@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanilla Live Regions Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .demo-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .live-region {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            margin: 10px 0;
+            min-height: 40px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vanilla Live Regions Demo</h1>
+    
+    <div class="demo-section">
+        <h2>Basic Live Region</h2>
+        <p>A simple live region with default settings</p>
+        <div id="basic-region" class="live-region"></div>
+        <button onclick="updateBasic()">Update Content</button>
+        <button onclick="clearBasic()">Clear Content</button>
+    </div>
+
+    <div class="demo-section">
+        <h2>Alert Live Region</h2>
+        <p>An alert region with assertive announcements</p>
+        <div id="alert-region" class="live-region"></div>
+        <button onclick="showAlert()">Show Alert</button>
+    </div>
+
+    <div class="demo-section">
+        <h2>Status Updates</h2>
+        <p>A status region for progress updates</p>
+        <div id="status-region" class="live-region"></div>
+        <button onclick="startProgress()">Start Progress</button>
+    </div>
+
+    <div class="demo-section">
+        <h2>Chat Log Example</h2>
+        <p>A log region for chat messages</p>
+        <div id="chat-log" class="live-region" style="height: 150px; overflow-y: auto;"></div>
+        <input type="text" id="chat-input" placeholder="Type a message" style="width: 300px;">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script type="module">
+        import LiveRegion from './src/liveRegion.js';
+        
+        // Make LiveRegion available globally for demo buttons
+        window.LiveRegion = LiveRegion;
+        
+        // Initialize live regions
+        LiveRegion('#basic-region', {
+            label: 'Basic Updates',
+            live: 'polite'
+        });
+        
+        LiveRegion('#alert-region', {
+            role: 'alert',
+            label: 'Important Alerts'
+        });
+        
+        LiveRegion('#status-region', {
+            role: 'status',
+            label: 'Progress Status',
+            atomic: 'true'
+        });
+        
+        LiveRegion('#chat-log', {
+            role: 'log',
+            label: 'Chat Messages',
+            relevant: 'additions text'
+        });
+        
+        // Demo functions
+        let updateCount = 0;
+        window.updateBasic = function() {
+            updateCount++;
+            LiveRegion('#basic-region', {
+                text: `Update ${updateCount}: The content has been updated at ${new Date().toLocaleTimeString()}`,
+                replace: true
+            });
+        };
+        
+        window.clearBasic = function() {
+            LiveRegion('#basic-region', {
+                text: '',
+                replace: true
+            });
+        };
+        
+        window.showAlert = function() {
+            LiveRegion('#alert-region', {
+                text: `Alert: This is an important notification at ${new Date().toLocaleTimeString()}`,
+                replace: true
+            });
+            
+            // Clear after 3 seconds
+            setTimeout(() => {
+                LiveRegion('#alert-region', {
+                    text: '',
+                    replace: true
+                });
+            }, 3000);
+        };
+        
+        let progress = 0;
+        let progressInterval;
+        window.startProgress = function() {
+            progress = 0;
+            clearInterval(progressInterval);
+            
+            LiveRegion('#status-region', {
+                busy: 'true'
+            });
+            
+            progressInterval = setInterval(() => {
+                progress += 10;
+                LiveRegion('#status-region', {
+                    text: `Progress: ${progress}% complete`,
+                    replace: true
+                });
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    LiveRegion('#status-region', {
+                        busy: 'false',
+                        text: 'Progress: Complete!',
+                        replace: true
+                    });
+                }
+            }, 500);
+        };
+        
+        window.sendMessage = function() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                const timestamp = new Date().toLocaleTimeString();
+                LiveRegion('#chat-log', {
+                    text: `<div><strong>[${timestamp}]</strong> ${message}</div>`,
+                    replace: false
+                });
+                input.value = '';
+            }
+        };
+        
+        // Allow enter key to send chat messages
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                window.sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
