@@ -1,5 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import LiveRegion from '../src/liveRegion.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('LiveRegion', () => {
   let container;
@@ -242,6 +248,86 @@ describe('LiveRegion', () => {
       expect(results).toHaveLength(2);
       expect(element1.getAttribute('role')).toBe('region');
       expect(element2.getAttribute('role')).toBe('region');
+    });
+  });
+
+  describe('UMD module support', () => {
+    it('should support AMD module definition path', () => {
+      let capturedFactory;
+      
+      // Mock AMD environment - create a function that captures the factory
+      const mockDefine = vi.fn((factory) => {
+        capturedFactory = factory;
+      });
+      mockDefine.amd = true;
+
+      // Extract just the UMD wrapper and execute it with AMD context
+      const moduleCode = fs.readFileSync(path.join(__dirname, '../src/liveRegion.js'), 'utf8');
+      
+      // Create new function with specific global context for AMD
+      const testGlobal = {};
+      const executeUMD = new Function('global', 'define', 'exports', 'module', moduleCode + '; return true;');
+      
+      // Execute with AMD conditions
+      executeUMD(testGlobal, mockDefine, undefined, undefined);
+      
+      // Verify AMD path was taken
+      expect(mockDefine).toHaveBeenCalled();
+      expect(typeof capturedFactory).toBe('function');
+      
+      // Test the factory function
+      const LiveRegionAMD = capturedFactory();
+      expect(typeof LiveRegionAMD).toBe('function');
+      
+      // Test basic functionality
+      const element = document.createElement('div');
+      container.appendChild(element);
+      LiveRegionAMD(element, { role: 'alert' });
+      expect(element.getAttribute('role')).toBe('alert');
+    });
+
+    it('should support browser global path', () => {
+      const testGlobal = {};
+      const moduleCode = fs.readFileSync(path.join(__dirname, '../src/liveRegion.js'), 'utf8');
+      
+      // Create new function with browser global context (no module systems)
+      // Need to provide context variables that make the conditions fail for CommonJS and AMD
+      const executeUMD = new Function(
+        'global', 
+        'define', 
+        'exports', 
+        'module', 
+        'window',
+        'document',
+        'setTimeout',
+        'HTMLElement',
+        'NodeList',
+        'Array',
+        moduleCode + '; return true;'
+      );
+      
+      // Execute with browser global conditions - no module systems present
+      executeUMD(
+        testGlobal,     // global (this will receive LiveRegion)
+        undefined,      // define (no AMD)
+        undefined,      // exports (no CommonJS)
+        undefined,      // module (no CommonJS)
+        testGlobal,     // window
+        document,       // document
+        setTimeout,     // setTimeout
+        HTMLElement,    // HTMLElement
+        NodeList,       // NodeList
+        Array          // Array
+      );
+      
+      // Should add LiveRegion to global
+      expect(typeof testGlobal.LiveRegion).toBe('function');
+      
+      // Test basic functionality
+      const element = document.createElement('div');
+      container.appendChild(element);
+      testGlobal.LiveRegion(element, { role: 'status' });
+      expect(element.getAttribute('role')).toBe('status');
     });
   });
 });
