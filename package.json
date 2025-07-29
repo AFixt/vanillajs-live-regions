@@ -1,6 +1,6 @@
 {
   "name": "@afixt/vanilla-live-regions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Vanilla JS Live Regions",
   "description": "Vanilla JavaScript library for managing ARIA live regions",
   "keywords": [

@@ -14,7 +14,9 @@
       "Bash(npm whoami:*)",
       "Bash(npm view:*)",
       "Bash(npm publish:*)",
-      "Bash(npm pkg:*)"
+      "Bash(npm pkg:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
